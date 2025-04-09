@@ -1,6 +1,6 @@
 # WEB_GYAKORLAT
 
 Készítők:  
-Szabó Martin  
-Burka Gergely Ervin  
-Horváth Gergő
+Szabó Martin || J5RL7M || kvokix    
+Burka Gergely Ervin || EP9NEQ || Madesz    
+Horváth Gergő || DHWIDH || xy
