@@ -2,5 +2,5 @@
 
 Készítők:  
 Szabó Martin  
-Burka Gergely
+Burka Gergely Ervin  
 Horváth Gergő
