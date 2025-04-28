@@ -1,317 +1,171 @@
-<!DOCTYPE html>
-<html lang="HU">
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
-  <head>
+$message = "";
+$message_type = ""; // success vagy danger
 
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
+// --- Adatbáziskapcsolat beállítások --- //
+$servername1 = "localhost";
+$username1 = "root";
+$password1 = "";
+$dbname1 = "vaszilijedc";
 
-    <title>Vaszilijedc</title>
+$servername2 = "mysql.omega";
+$port2 = 3306;
+$username2 = "vaszilijedc";
+$password2 = "ezegyjelszo!!48";
+$dbname2 = "vaszilijedc";
 
+// Próbáljuk az első kapcsolódást
+try {
+    $conn = new mysqli($servername1, $username1, $password1, $dbname1);
+} catch (mysqli_sql_exception $e) {
+    // Ha nem sikerül, próbáljuk a második szervert
+    try {
+        $conn = new mysqli($servername2, $username2, $password2, $dbname2, $port2);
+    } catch (mysqli_sql_exception $e) {
+        die("Nem sikerült csatlakozni az adatbázishoz: " . $e->getMessage());
+    }
+}
 
-    <!-- Additional CSS Files -->
-    <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
+// CAPTCHA számok generálása
+if (empty($_SESSION['captcha_num1']) || empty($_SESSION['captcha_num2'])) {
+    $_SESSION['captcha_num1'] = rand(1, 20);
+    $_SESSION['captcha_num2'] = rand(1, 20);
+}
 
-    <link rel="stylesheet" type="text/css" href="assets/css/font-awesome.css">
+// Üzenetküldés feldolgozása
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['username'])) {
+    $subject = trim($_POST['subject']);
+    $messageText = trim($_POST['message']);
+    $captcha = (int)$_POST['captcha'];
+    $expected_captcha = $_SESSION['captcha_num1'] - $_SESSION['captcha_num2'];
+    $user_id = $_SESSION['user_id'];
 
-    <link rel="stylesheet" href="assets/css/templatemo-hexashop.css">
+    if ($captcha !== $expected_captcha) {
+        $message = 'Hibás CAPTCHA megoldás! Próbáld újra.';
+        $message_type = 'danger';
+    } else {
+        $stmt = $conn->prepare("INSERT INTO messages (user_id, subject, message) VALUES (?, ?, ?)");
+        if ($stmt) {
+            $stmt->bind_param("iss", $user_id, $subject, $messageText);
+            if ($stmt->execute()) {
+                $message = 'Az üzenetet sikeresen elküldtük!';
+                $message_type = 'success';
+                // Új CAPTCHA generálás
+                $_SESSION['captcha_num1'] = rand(1, 20);
+                $_SESSION['captcha_num2'] = rand(1, 20);
+            } else {
+                $message = 'Hiba történt az üzenet mentésekor!';
+                $message_type = 'danger';
+            }
+            $stmt->close();
+        } else {
+            $message = 'Hiba történt az adatbázis művelet során!';
+            $message_type = 'danger';
+        }
+    }
+}
 
-    <link rel="stylesheet" href="assets/css/owl-carousel.css">
-
-    <link rel="stylesheet" href="assets/css/lightbox.css">
-
-    </head>
-    
-    <body>
-    
-    <!-- ***** Preloader Start ***** -->
-    <div id="preloader">
-        <div class="jumper">
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
-    </div>  
-    <!-- ***** Preloader End ***** -->
-    <?php
-session_start();
+$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="HU">
 <head>
-    <!-- meta, css, stb... -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" type="image/jpg" href="assets/images/Logo_nagy.jpg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
+    <title>Vaszilij EDC</title>
+    <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/font-awesome.css">
+    <link rel="stylesheet" href="assets/css/templatemo-hexashop.css">
+    <link rel="stylesheet" href="assets/css/owl-carousel.css">
+    <link rel="stylesheet" href="assets/css/lightbox.css">
 </head>
+
 <body>
 
-<header class="header-area header-sticky">
+<?php include 'header.php'; ?>
+
+<!-- Flash üzenet -->
+<?php if (!empty($message)): ?>
+<div id="flash-message" class="alert alert-<?= $message_type ?> text-center"
+     style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1050; width: auto; max-width: 500px;">
+    <?= htmlspecialchars($message) ?>
+</div>
+<?php endif; ?>
+
+<section class="section" style="padding-bottom: 60px;">
     <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <nav class="main-nav">
-                    <!-- Logo -->
-                    <a href="index.php" class="logo">
-                        <img src="assets/images/logo.png">
-                    </a>
-                    <ul class="nav">
-                        
-                    <?php if (isset($_SESSION['username'])): ?>
-                            <li><a href="#">Bejelentkezve mint: <strong><?= htmlspecialchars($_SESSION['username']) ?></strong></a></li>
-                            <li><a href="logout.php">Kijelentkezés</a></li>
-                        <?php else: ?>
-                            <li><a href="login.html">Bejelentkezés</a></li>
-                            <li><a href="register.html">Regisztráció</a></li>
-                        <?php endif; ?>
-                    </ul>
 
-                    <!-- Menü -->
-                    <ul class="nav">
-                        <li class="scroll-to-section"><a href="index.php" class="active">Kezdőlap</a></li>
-                        <li class="scroll-to-section"><a href="contact.php">Üzenetküldés</a></li>
-                        <li class="scroll-to-section"><a href="about.php">Támogatás</a></li>
-                        <li class="scroll-to-section"><a href="blog.php">Blog</a></li>
-
-
-                        <li class="submenu">
-                            <a href="javascript:;">Írások</a>
-                            <ul>
-                                <li><a href="products.php">Novella</a></li>
-                                <li class="submenu">
-                                    <a href="javascript:;">Multitool</a>
-                                    <ul>
-                                        <li><a href="about.php">A</a></li>
-                                        <li><a href="about.php">B</a></li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <a class='menu-trigger'>
-                        <span>Menu</span>
-                    </a>
-                </nav>
+        <?php if (!isset($_SESSION['username'])): ?>
+            <div class="alert alert-warning text-center" style="max-width: 600px; margin: 100px auto;">
+                <h4>Az üzenetküldéshez be kell jelentkezned!</h4>
+                <p><a href="login_page.php" class="btn btn-primary mt-3">Bejelentkezés</a></p>
             </div>
-        </div>
+        <?php else: ?>
+            <div class="container py-5">
+                <h3 class="mb-4">Ha üzenetet szeretnél küldeni nekem, itt megteheted:</h3>
+                <form action="contact.php" method="post" class="shadow p-4 rounded bg-light">
+
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Tárgy</label>
+                        <input type="text" class="form-control" id="subject" name="subject">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Üzenet <span class="text-danger">(kötelező)</span></label>
+                        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                    </div>
+
+                    <div class="mb-3 d-flex align-items-center">
+                        <label class="me-2"><?= $_SESSION['captcha_num1'] ?> - <?= $_SESSION['captcha_num2'] ?> =</label>
+                        <input type="text" class="form-control w-auto" name="captcha" required>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="dataConsent" required>
+                        <label class="form-check-label" for="dataConsent">
+                            Elfogadom az <a href="adatkezeles.php">Adatkezelési tájékoztatót</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary px-4">Küldés</button>
+                </form>
+            </div>
+        <?php endif; ?>
+
     </div>
-</header>
+</section>
 
-    <!-- ***** Header Area End ***** -->
+<?php include 'footer.php'; ?>
 
-    <!-- ***** Main Banner Area Start ***** -->
-    <div class="page-heading about-page-heading" id="top">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="inner-content">
-                        <h2>Contact Us</h2>
-                        <span>Awesome, clean &amp; creative HTML5 Template</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- ***** Main Banner Area End ***** -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- ***** Contact Area Starts ***** -->
-    <div class="contact-us">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-6">
-                    <div id="map">
-                      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d90186.37207676383!2d-80.13495239500924!3d25.9317678710111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88d9ad1877e4a82d%3A0xa891714787d1fb5e!2sPier%20Park!5e1!3m2!1sen!2sth!4v1637512439384!5m2!1sen!2sth" width="100%" height="400px" frameborder="0" style="border:0" allowfullscreen></iframe>
-                      <!-- You can simply copy and paste "Embed a map" code from Google Maps for any location. -->
-                      
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="section-heading">
-                        <h2>Say Hello. Don't Be Shy!</h2>
-                        <span>Details to details is what makes Hexashop different from the other themes.</span>
-                    </div>
-                    <form id="contact" action="" method="post">
-                        <div class="row">
-                          <div class="col-lg-6">
-                            <fieldset>
-                              <input name="name" type="text" id="name" placeholder="Your name" required="">
-                            </fieldset>
-                          </div>
-                          <div class="col-lg-6">
-                            <fieldset>
-                              <input name="email" type="text" id="email" placeholder="Your email" required="">
-                            </fieldset>
-                          </div>
-                          <div class="col-lg-12">
-                            <fieldset>
-                              <textarea name="message" rows="6" id="message" placeholder="Your message" required=""></textarea>
-                            </fieldset>
-                          </div>
-                          <div class="col-lg-12">
-                            <fieldset>
-                              <button type="submit" id="form-submit" class="main-dark-button"><i class="fa fa-paper-plane"></i></button>
-                          </div>
-                        </div>
-                      </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- ***** Contact Area Ends ***** -->
-
-    <!-- ***** Subscribe Area Starts ***** -->
-    <div class="subscribe">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="section-heading">
-                        <h2>By Subscribing To Our Newsletter You Can Get 30% Off</h2>
-                        <span>Details to details is what makes Hexashop different from the other themes.</span>
-                    </div>
-                    <form id="subscribe" action="" method="get">
-                        <div class="row">
-                          <div class="col-lg-5">
-                            <fieldset>
-                              <input name="name" type="text" id="name" placeholder="Your Name" required="">
-                            </fieldset>
-                          </div>
-                          <div class="col-lg-5">
-                            <fieldset>
-                              <input name="email" type="text" id="email" pattern="[^ @]*@[^ @]*" placeholder="Your Email Address" required="">
-                            </fieldset>
-                          </div>
-                          <div class="col-lg-2">
-                            <fieldset>
-                              <button type="submit" id="form-submit" class="main-dark-button"><i class="fa fa-paper-plane"></i></button>
-                            </fieldset>
-                          </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="col-lg-4">
-                    <div class="row">
-                        <div class="col-6">
-                            <ul>
-                                <li>Store Location:<br><span>Sunny Isles Beach, FL 33160, United States</span></li>
-                                <li>Phone:<br><span>010-020-0340</span></li>
-                                <li>Office Location:<br><span>North Miami Beach</span></li>
-                            </ul>
-                        </div>
-                        <div class="col-6">
-                            <ul>
-                                <li>Work Hours:<br><span>07:30 AM - 9:30 PM Daily</span></li>
-                                <li>Email:<br><span>info@company.com</span></li>
-                                <li>Social Media:<br><span><a href="#">Facebook</a>, <a href="#">Instagram</a>, <a href="#">Behance</a>, <a href="#">Linkedin</a></span></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- ***** Subscribe Area Ends ***** -->
-
-    <!-- ***** Footer Start ***** -->
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-3">
-                    <div class="first-item">
-                        <div class="logo">
-                            <img src="assets/images/white-logo.png" alt="hexashop ecommerce templatemo">
-                        </div>
-                        <ul>
-                            <li><a href="#">16501 Collins Ave, Sunny Isles Beach, FL 33160, United States</a></li>
-                            <li><a href="#">hexashop@company.com</a></li>
-                            <li><a href="#">010-020-0340</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-lg-3">
-                    <h4>Shopping &amp; Categories</h4>
-                    <ul>
-                        <li><a href="#">Men’s Shopping</a></li>
-                        <li><a href="#">Women’s Shopping</a></li>
-                        <li><a href="#">Kid's Shopping</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3">
-                    <h4>Useful Links</h4>
-                    <ul>
-                        <li><a href="#">Homepage</a></li>
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Help</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3">
-                    <h4>Help &amp; Information</h4>
-                    <ul>
-                        <li><a href="#">Help</a></li>
-                        <li><a href="#">FAQ's</a></li>
-                        <li><a href="#">Shipping</a></li>
-                        <li><a href="#">Tracking ID</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-12">
-                    <div class="under-footer">
-                        <p>Copyright © 2022 HexaShop Co., Ltd. All Rights Reserved. 
-                        
-                        <br>Design: <a href="https://templatemo.com" target="_parent" title="free css templates">TemplateMo</a></p>
-                        <ul>
-                            <li><a href="#"><i class="fa fa-facebook"></i></a></li>
-                            <li><a href="#"><i class="fa fa-twitter"></i></a></li>
-                            <li><a href="#"><i class="fa fa-linkedin"></i></a></li>
-                            <li><a href="#"><i class="fa fa-behance"></i></a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-    
-
-    <!-- jQuery -->
-    <script src="assets/js/jquery-2.1.0.min.js"></script>
-
-    <!-- Bootstrap -->
-    <script src="assets/js/popper.js"></script>
-    <script src="assets/js/bootstrap.min.js"></script>
-
-    <!-- Plugins -->
-    <script src="assets/js/owl-carousel.js"></script>
-    <script src="assets/js/accordions.js"></script>
-    <script src="assets/js/datepicker.js"></script>
-    <script src="assets/js/scrollreveal.min.js"></script>
-    <script src="assets/js/waypoints.min.js"></script>
-    <script src="assets/js/jquery.counterup.min.js"></script>
-    <script src="assets/js/imgfix.min.js"></script> 
-    <script src="assets/js/slick.js"></script> 
-    <script src="assets/js/lightbox.js"></script> 
-    <script src="assets/js/isotope.js"></script> 
-    
-    <!-- Global Init -->
-    <script src="assets/js/custom.js"></script>
-
-    <script>
-
-        $(function() {
-            var selectedClass = "";
-            $("p").click(function(){
-            selectedClass = $(this).attr("data-rel");
-            $("#portfolio").fadeTo(50, 0.1);
-                $("#portfolio div").not("."+selectedClass).fadeOut();
+<script>
+// Flash üzenet eltüntetése pár másodperc múlva
+document.addEventListener("DOMContentLoaded", function() {
+    var flashMessage = document.getElementById('flash-message');
+    if (flashMessage) {
+        setTimeout(function() {
+            flashMessage.style.transition = "opacity 0.5s ease";
+            flashMessage.style.opacity = 0;
             setTimeout(function() {
-              $("."+selectedClass).fadeIn();
-              $("#portfolio").fadeTo(50, 1);
-            }, 500);
-                
-            });
-        });
+                flashMessage.remove();
+            }, 500); // Miután elhalványult, eltávolítjuk
+        }, 3000); // 3 másodperc után kezd eltűnni
+    }
+});
+</script>
 
-    </script>
-
-  </body>
-
+</body>
 </html>

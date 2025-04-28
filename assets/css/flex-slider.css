@@ -26,6 +26,18 @@
 .flex-slider a:hover {
   outline: none;
 }
+.popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 1000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    font-size: 16px;
+}
 .slides,
 .slides > li,
 .flex-control-nav,
