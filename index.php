@@ -328,6 +328,57 @@ if (isset($_SESSION['error_message'])) {
         </div>
     </section>
 
+    
+
+    
+
+    <section class="section" id="explore">
+    <div class="container" style="text-align: center;">
+        <h2 style="text-align: center;"><b>Legutóbbi videónk</b></h2>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/0VRhcXBykbs?si=eSPX0UlabTHMXR3J" title="YouTube lejátszó" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+    <div class="container" style="text-align: center;">
+        <h2><b>Látogasd meg a YouTube <br>csatornánkat is!</b></h2>
+        <a href="https://www.youtube.com/@vaszilijedc6737" target="_blank">YouTube csatorna megtekintése</a>
+    </div>
+</section>
+
+
+
+
+    <section class="section" id="explore">
+    <h2 style="text-align: center;">Elérhetőségeink</h2>
+    <div class="container">
+        
+        
+        <div class="row" style="display: flex; justify-content: space-around; align-items: center;">
+            <div class="col-lg-3" style="text-align: center;">
+                <div class="inner-content">
+                    <ul>
+                        <li><a href="https://www.facebook.com/VaszilijEdc/?locale=hu_HU"><img src="assets/images/facebook.png"></a></li>
+                    </ul>
+                    <div class="down-content">
+                        <h4>Facebook</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3" style="text-align: center;">
+                <div class="inner-content">
+                    <ul>
+                        <li><a href="https://hu.pinterest.com/vaszilijedc/"><img src="assets/images/Pinterest.png"></a></li>
+                    </ul>
+                    <div class="down-content">
+                        <h4>Pinterest</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
 
     <?php include 'footer.php'; ?>
 
